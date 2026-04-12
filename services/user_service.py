@@ -8,7 +8,7 @@ import jwt
 from exceptions.user_exceptions import *
 from repositories.user_repo import *
 
-SECRET_KEY ="769085"
+SECRET_KEY ="a_very_long_random_secret_key_769085"
 
 def register_user(data):
     if not data:
@@ -21,10 +21,10 @@ def register_user(data):
         raise UserAlreadyExistsException("Email already exists")
     validated_password = __validate_password(data["password"])
 
-    hashed = bcrypt.hashpw(validated_password.encode(), bcrypt.gensalt())
+    hashed = bcrypt.hashpw(validated_password.encode("utf-8"), bcrypt.gensalt())
     validated_email = __validate_email(data['email'])
 
-    user = User(username=data['username'], password=hashed,email=validated_email)
+    user = User(username=data['username'], password=hashed.decode("utf-8"),email=validated_email)
 
     return save(user)
 
@@ -34,13 +34,15 @@ def login_user(data):
         raise InvalidCredentialsException("Username and password required")
 
     user = get_user_by_username(data['username'])
-    if not user or not bcrypt.checkpw(data['password'].encode(), user.password):
+    if not user or not bcrypt.checkpw(data['password'].encode("utf-8"), user.password.encode("utf-8")):
         raise InvalidCredentialsException("Invalid username or password")
 
     token = jwt.encode({
         "user_id": user.user_id,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
     },SECRET_KEY, algorithm="HS256")
+
+
     return token
 
 def get_user(user_id):

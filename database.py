@@ -6,5 +6,6 @@ def init_db(app):
     db.init_app(app)
 
     with app.app_context():
-        
+        from models.user import User
+        from models.expense import Expense
         db.create_all()

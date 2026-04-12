@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from exceptions.expense_exceptions import *
 from models.expense import Expense
 from repositories.expense_repo import *
@@ -9,10 +11,15 @@ def create_expense(data,user_id):
     if not data:
         raise InvalidExpenseException("Required data is missing")
     __validate_expense(data)
+    date_str = data["date"]
+    try:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except:
+        raise InvalidExpenseException("Invalid date format YYYY-MM-DD")
     expense = Expense(
         amount = data["amount"],
         category = data["category"],
-        date = data["date"],
+        date = date,
         user_id = user_id
     )
     return save(expense)
@@ -81,5 +88,5 @@ def __validate_expense(data):
 def __get_validated_expense(expense_id, user_id):
     expense = get_expenses_by_id(expense_id,user_id)
     if not expense:
-        raise ExpenseNotFoundException("No expenses found for this date")
+        raise ExpenseNotFoundException("No expenses found")
     return expense
