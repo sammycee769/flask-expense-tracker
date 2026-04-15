@@ -1,13 +1,14 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from services.authentication_service import token_required
 from services.expense_service import *
 
 expense_blueprint = Blueprint("expense",__name__)
 
 @expense_blueprint.route("/expense",methods=["POST"])
-@token_required
-def create(user_id):
+@jwt_required()
+def create():
+    user_id= get_jwt_identity()
     data = request.get_json()
     expense = create_expense(data, user_id)
 
@@ -17,10 +18,10 @@ def create(user_id):
     }),201
 
 @expense_blueprint.route("/expenses", methods=["GET"])
-@token_required
-def get_all(user_id):
+@jwt_required()
+def get_all():
+    user_id= get_jwt_identity()
     expenses = fetch_all_expenses(user_id)
-
     return jsonify([
         {
             "id": expense.expense_id,
@@ -31,9 +32,10 @@ def get_all(user_id):
     ]),200
 
 @expense_blueprint.route("/expenses/category/<category>", methods=["GET"])
-@token_required
-def get_by_category(user_id,category):
-    expenses = get_expenses_by_category(user_id,category)
+@jwt_required()
+def get_by_category(category):
+    user_id = get_jwt_identity()
+    expenses = get_expense_by_category(user_id,category)
 
     return jsonify([
         {
@@ -45,9 +47,10 @@ def get_by_category(user_id,category):
     ]),200
 
 @expense_blueprint.route("/expenses/date/<date>", methods=["GET"])
-@token_required
-def get_by_date(user_id,date):
-    expenses = get_expenses_by_date(user_id,date)
+@jwt_required()
+def get_by_date(date):
+    user_id= get_jwt_identity()
+    expenses = get_expense_by_date(user_id,date)
 
     return jsonify([
         {
@@ -59,9 +62,10 @@ def get_by_date(user_id,date):
     ]),200
 
 @expense_blueprint.route("/expenses/<int:expense_id>", methods=["PATCH"])
-@token_required
-def update(expense_id, user_id):
+@jwt_required()
+def update(expense_id):
     data = request.get_json()
+    user_id= get_jwt_identity()
     update_expense(expense_id, user_id, data)
 
     return jsonify({
@@ -69,8 +73,9 @@ def update(expense_id, user_id):
     }),200
 
 @expense_blueprint.route("/expenses/<int:expense_id>", methods=["DELETE"])
-@token_required
-def delete_expense_route(expense_id, user_id):
+@jwt_required()
+def delete_expense_route(expense_id):
+    user_id= get_jwt_identity()
     delete_expense(expense_id, user_id)
 
     return jsonify({

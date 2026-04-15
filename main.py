@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import jsonify
+from flask_jwt_extended import JWTManager
 from flask_restx import Api
 
 from exceptions.expense_exceptions import *
@@ -17,9 +18,9 @@ api = Api(app,
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:christian@localhost/expense_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = "a_very_long_random_secret_key_769085"
-
-
+jwt = JWTManager()
+app.config["JWT_SECRET_KEY"] = "jwt-secret-key"
+jwt.init_app(app)
 init_db(app)
 
 app.register_blueprint(user_blueprint, url_prefix="/api/users")

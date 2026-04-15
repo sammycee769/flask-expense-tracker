@@ -4,10 +4,11 @@ from exceptions.expense_exceptions import *
 from models.expense import Expense
 from repositories.expense_repo import *
 from repositories.user_repo import get_user_by_id
+from services.user_service import get_user
 
 
 def create_expense(data,user_id):
-    get_user_by_id(user_id)
+    get_user(user_id)
     if not data:
         raise InvalidExpenseException("Required data is missing")
     __validate_expense(data)
@@ -25,14 +26,14 @@ def create_expense(data,user_id):
     return save(expense)
 
 def fetch_all_expenses(user_id):
-    get_user_by_id(user_id)
+    get_user(user_id)
     expenses = get_all_expenses_by_user(user_id)
     if not expenses:
         raise ExpenseNotFoundException("No expenses found for this user")
     return expenses
 
 def get_expense_by_category(user_id, category):
-    get_user_by_id(user_id)
+    get_user(user_id)
     expenses = get_expenses_by_category(user_id, category)
 
     if not expenses:
@@ -41,7 +42,7 @@ def get_expense_by_category(user_id, category):
     return expenses
 
 def get_expense_by_date(user_id, date):
-    get_user_by_id(user_id)
+    get_user(user_id)
     expenses = get_expenses_by_date(user_id, date)
 
     if not expenses:
@@ -50,13 +51,13 @@ def get_expense_by_date(user_id, date):
     return expenses
 
 def delete_expense(expense_id,user_id):
-    get_user_by_id(user_id)
+    get_user(user_id)
     expense = __get_validated_expense(expense_id, user_id)
     delete(expense)
     return True
 
 def update_expense(expense_id,user_id,data):
-    get_user_by_id(user_id)
+    get_user(user_id)
 
     if not data:
         raise InvalidExpenseException("Required data is missing")
@@ -70,7 +71,10 @@ def update_expense(expense_id,user_id,data):
         expense.category = data["category"]
 
     if "date"  in data:
-        expense.date = data["date"]
+        try:
+            expense.date = datetime.strptime(data["date"], "%Y-%m-%d").date()
+        except:
+            raise InvalidExpenseException("Invalid date format YYYY-MM-DD")
 
     return save(expense)
 

@@ -1,14 +1,12 @@
-import datetime
 
 import bcrypt
 import re
 
-import jwt
+from flask_jwt_extended import create_access_token
 
 from exceptions.user_exceptions import *
 from repositories.user_repo import *
 
-SECRET_KEY ="a_very_long_random_secret_key_769085"
 
 def register_user(data):
     if not data:
@@ -37,13 +35,12 @@ def login_user(data):
     if not user or not bcrypt.checkpw(data['password'].encode("utf-8"), user.password.encode("utf-8")):
         raise InvalidCredentialsException("Invalid username or password")
 
-    token = jwt.encode({
-        "user_id": user.user_id,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
-    },SECRET_KEY, algorithm="HS256")
+    token = create_access_token(identity=str(user.user_id))
 
-
-    return token
+    return {
+        "token":token,
+        "user_id": user.user_id
+            }
 
 def get_user(user_id):
     user = get_user_by_id(user_id)
@@ -61,7 +58,8 @@ def update_user(user_id, data):
     user = get_user(user_id)
 
     if "username" in data:
-        if get_user_by_username(data["username"]):
+        existing_user = get_user_by_username(data["username"])
+        if existing_user and existing_user.user_id != user_id:
             raise UserAlreadyExistsException("Username already taken")
         user.username = data["username"]
 
@@ -78,13 +76,13 @@ def reset_password(user_id,data):
         raise InvalidCredentialsException("Password required")
 
     user = get_user(user_id)
-    if  bcrypt.checkpw(data['password'].encode(), user.password):
+    if bcrypt.checkpw(data['password'].encode(), user.password.encode()):
         raise InvalidCredentialsException("password cannot be the same with old password")
 
     validated_password = __validate_password(data["password"])
     hashed = bcrypt.hashpw(validated_password.encode(), bcrypt.gensalt())
 
-    user.password = hashed
+    user.password = hashed.decode("utf-8")
     return save(user)
 
 

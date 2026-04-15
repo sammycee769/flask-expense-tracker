@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from services.authentication_service import token_required
 from services.user_service import *
 
 user_blueprint = Blueprint("user", __name__)
@@ -31,8 +31,9 @@ def login():
     }),200
 
 @user_blueprint.route("/me",methods=["GET"])
-@token_required
-def get_profile(user_id):
+@jwt_required()
+def get_profile():
+    user_id = get_jwt_identity()
     user = get_user(user_id)
 
     return jsonify({
@@ -42,8 +43,9 @@ def get_profile(user_id):
     })
 
 @user_blueprint.route("/me",methods=["PATCH"])
-@token_required
-def update(user_id):
+@jwt_required()
+def update():
+    user_id = get_jwt_identity()
     data = request.get_json()
     if not data:
         return jsonify({"error": "Request body is required"}), 400
@@ -55,8 +57,9 @@ def update(user_id):
     })
 
 @user_blueprint.route("/me",methods=["DELETE"])
-@token_required
-def delete(user_id):
+@jwt_required()
+def delete():
+    user_id = get_jwt_identity()
     delete_user(user_id)
 
     return jsonify({
